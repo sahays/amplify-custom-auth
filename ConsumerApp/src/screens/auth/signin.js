@@ -1,5 +1,10 @@
 import React, {useState, useEffect} from 'react';
-import {ScrollView, KeyboardAvoidingView, StyleSheet} from 'react-native';
+import {
+  ScrollView,
+  KeyboardAvoidingView,
+  StyleSheet,
+  Alert,
+} from 'react-native';
 import {Auth} from 'aws-amplify';
 import * as yup from 'yup';
 
@@ -55,22 +60,43 @@ const signinScreen = props => {
           user: result,
         });
       } else if (result.challengeName === 'NEW_PASSWORD_REQUIRED') {
-        navigation.navigate('RequireNewPassword', {
-          user: result,
-        });
+        Alert.alert('', 'You need to reset your password for secure login', [
+          {
+            text: 'OK',
+            onPress: () =>
+              navigation.navigate('RequireNewPassword', {
+                user: result,
+              }),
+          },
+        ]);
       }
     } catch (err) {
       console.log(err);
       if (err.code === 'UserNotConfirmedException') {
-        navigation.navigate('ConfirmSignup', {
-          username,
-        });
+        Alert.alert(
+          '',
+          'For secure signin, you need to verify your phone number',
+          [
+            {
+              text: 'OK',
+              onPress: () =>
+                navigation.navigate('ConfirmSignup', {
+                  username,
+                }),
+            },
+          ],
+        );
       } else if (err.code === 'PasswordResetRequiredException') {
         navigation.navigate('ForgotPassword');
       } else if (err.code === 'NotAuthorizedException') {
-        // The error happens when the incorrect password is provided
+        Alert.alert('', 'Please verify the password that you have enetered', [
+          {text: 'Try again'},
+        ]);
       } else if (err.code === 'UserNotFoundException') {
-        navigation.navigate('Signup');
+        Alert.alert('', "We don't recognize this number", [
+          {text: 'Signup', onPress: () => navigation.navigate('Signup')},
+          {text: 'Try again'},
+        ]);
       } else {
         console.log(err);
       }

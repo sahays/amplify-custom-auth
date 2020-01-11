@@ -1,5 +1,10 @@
 import React, {useState, useEffect} from 'react';
-import {ScrollView, StyleSheet, KeyboardAvoidingView} from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Alert,
+} from 'react-native';
 import {Auth} from 'aws-amplify';
 import * as yup from 'yup';
 import * as RNLocalize from 'react-native-localize';
@@ -13,6 +18,8 @@ import Username from '../../components/username';
 import Password from '../../components/password';
 
 const signupScreen = props => {
+  const {navigation} = props;
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -43,7 +50,7 @@ const signupScreen = props => {
   });
 
   const onSignin = () => {
-    props.navigation.navigate('Signin');
+    navigation.navigate('Signin');
   };
 
   useEffect(() => {
@@ -76,8 +83,29 @@ const signupScreen = props => {
             phone_number: getCountryCode() + username,
           },
         });
-        props.navigation.navigate('ConfirmSignup');
+        navigation.navigate('ConfirmSignup', {
+          username,
+        });
       } catch (e) {
+        switch (e.code) {
+          case 'InvalidParameterException':
+          case 'InvalidPasswordException':
+            Alert.alert(
+              '',
+              'Use a different password that is at least 6 characters long and that contains one uppercase, one lowercase, and one number e.g. Apple123',
+              [{text: 'OK'}],
+            );
+            break;
+          case 'UsernameExistsException':
+            Alert.alert(
+              '',
+              'Someone has already used this phone number to signup',
+              [{text: 'Try a different phone number'}],
+            );
+          case 'CodeDeliveryFailureException':
+          default:
+            console.log(e);
+        }
         console.log(e);
       }
     }

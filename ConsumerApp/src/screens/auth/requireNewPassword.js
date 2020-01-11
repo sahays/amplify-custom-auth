@@ -1,21 +1,76 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import {
-  Image,
   ScrollView,
   KeyboardAvoidingView,
   StyleSheet,
+  Text,
+  Alert,
 } from 'react-native';
-import styleConstants from '../../styles/style-constants';
-import IconInput from '../../components/icon-input';
-import BlockButton from '../../components/block-button';
+import {Auth} from 'aws-amplify';
+import * as yup from 'yup';
 
-const requireNewPasswordScreen = () => {
+import styleConstants from '../../styles/style-constants';
+import BlockButton from '../../components/block-button';
+import Logo from '../../components/logo';
+import Password from '../../components/password';
+
+const requireNewPasswordScreen = props => {
+  const {navigation} = props;
+  const [user, setUser] = useState(navigation.getParam('user'));
+  const [password, setPassword] = useState('');
+  const [formValid, setFormValid] = useState(false);
+
+  const schema = yup.object().shape({
+    password: yup
+      .string()
+      .required('Password is required')
+      .min(6, 'Password too short')
+      .max(12, 'Password too long'),
+  });
+
+  useEffect(() => {
+    const isValid = schema.isValidSync({
+      password,
+    });
+    setFormValid(isValid);
+  }, [password]);
+
+  const onResetPassword = async () => {
+    if (formValid) {
+      try {
+        await Auth.completeNewPassword(user, password);
+        Alert('', 'Done. Please sign in with this new password', [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('Signin'),
+          },
+        ]);
+      } catch (e) {
+        console.log(e);
+        Alert('', 'Failed to reset your password', [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('Signin'),
+          },
+        ]);
+      }
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <KeyboardAvoidingView behavior="padding" enabled style={styles.content}>
         <Logo style={styles.image} />
-        <IconInput label="Password" icon="lock-outline" type="password" />
-        <BlockButton label="Reset password" />
+        <Password
+          text={password}
+          onChangeText={text => setPassword(text)}
+          schema={schema}
+        />
+        <BlockButton
+          label="Reset password"
+          onPress={onResetPassword}
+          disabled={!formValid}
+        />
         <Text style={styles.helperText}>
           You are required to set a new password
         </Text>

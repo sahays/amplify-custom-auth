@@ -17,11 +17,6 @@ const confirmSignupScreen = props => {
   const [formValid, setFormValid] = useState(true);
 
   const schema = yup.object().shape({
-    username: yup
-      .string()
-      .required()
-      .min(8)
-      .max(10),
     code: yup
       .string()
       .required()
@@ -30,12 +25,12 @@ const confirmSignupScreen = props => {
   });
 
   useEffect(() => {
-    const isValid = schema.isValidSync({
-      username,
-      code,
-    });
-    setFormValid(isValid);
-  }, [username, code]);
+    setFormValid(
+      schema.isValidSync({
+        code,
+      }),
+    );
+  }, [code]);
 
   const onConfirmSignup = async () => {
     try {
